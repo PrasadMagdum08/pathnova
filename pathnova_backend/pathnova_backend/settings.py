@@ -103,7 +103,7 @@ from mongoengine import connect
 connect(
     db=os.getenv('db'),
     host=os.getenv('host'),
-    port=os.getenv('port')
+    port= int(os.getenv('port'))
 )
 
 
