@@ -4,6 +4,9 @@ from rest_framework import status
 from .models import User
 from .serializers import RegisterSerializer, LoginSerializer
 
+
+
+
 class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
