@@ -4,3 +4,4 @@ djongo
 pymongo
 django-cors-headers
 python-dotenv
+mongoengine
