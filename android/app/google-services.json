@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1061317073206",
+    "project_id": "pathnova-a74c4",
+    "storage_bucket": "pathnova-a74c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061317073206:android:5b1e8a1dffbd0332c5fb97",
+        "android_client_info": {
+          "package_name": "com.example.pathnova_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPGvxyycG9wspSEuPwVwQTvWlAlhw9qg8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
