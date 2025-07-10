@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'edit_student_profile_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
-
-    final Map<String, dynamic>? profileData;
+  final Map<String, dynamic>? profileData;
   final String? profileImageUrl;
 
   const StudentProfileScreen({
@@ -57,6 +56,85 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     }
   }
 
+  List<String> _getMissingFields(Map<String, dynamic> profile) {
+    final requiredFields = {
+      'name': 'Name',
+      'email': 'Email',
+      'college': 'College',
+      'semester': 'Semester',
+      'current_major': 'Major',
+      'batch': 'Batch',
+      'intended_specialized_major': 'Specialization',
+      'skills': 'Skills',
+      'upskilling': 'Upskilling',
+      'portfolio_url': 'Portfolio URL',
+      'portfolio_building_duration': 'Portfolio Duration',
+    };
+
+    List<String> missing = [];
+
+    requiredFields.forEach((key, label) {
+      final value = profile[key];
+      if (value is String && value.trim().isEmpty) {
+        missing.add(label);
+      } else if (value is List && value.isEmpty) {
+        missing.add(label);
+      } else if (value == null) {
+        missing.add(label);
+      }
+    });
+
+    return missing;
+  }
+
+  Widget _missingFieldsAlert(List<String> missingFields) {
+    if (missingFields.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.orange[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '⚠️ Profile Incomplete',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Please complete the following fields:',
+            style: TextStyle(fontSize: 13, color: Colors.black87),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: missingFields
+                .map((field) => Chip(
+                      label: Text(field),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(color: Colors.orange),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +156,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      _missingFieldsAlert(_getMissingFields(profileData!)),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(

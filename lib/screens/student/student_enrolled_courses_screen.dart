@@ -1,7 +1,31 @@
+import 'package:Pathnova/services/auth_provider.dart' show AuthService;
 import 'package:flutter/material.dart';
+import '../../models/course_model.dart';
 
-class StudentCoursesScreen extends StatelessWidget {
-  const StudentCoursesScreen({super.key});
+class StudentEnrolledCoursesScreen extends StatefulWidget {
+  const StudentEnrolledCoursesScreen({super.key});
+
+  @override
+  State<StudentEnrolledCoursesScreen> createState() => _StudentEnrolledCoursesScreenState();
+}
+
+class _StudentEnrolledCoursesScreenState extends State<StudentEnrolledCoursesScreen> {
+  List<Course> enrolledCourses = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadEnrolledCourses();
+  }
+
+  Future<void> loadEnrolledCourses() async {
+    final courses = await AuthService().fetchEnrolledCourses();
+    setState(() {
+      enrolledCourses = courses;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,110 +50,104 @@ class StudentCoursesScreen extends StatelessWidget {
           IconButton(icon: const Icon(Icons.account_circle_outlined, color: Colors.black), onPressed: () {}),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search Courses...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.black12),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.black26),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search Courses...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.black12),
                       ),
-                      child: const Text('All Courses', style: TextStyle(color: Colors.black)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.black26),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.black26),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('All Courses', style: TextStyle(color: Colors.black)),
+                        ),
                       ),
-                      child: const Text('Recommend', style: TextStyle(color: Colors.black)),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.black26),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Recommend', style: TextStyle(color: Colors.black)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: SizedBox()),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(child: SizedBox()),
+                  const SizedBox(height: 16),
+                  Text('My Enrolled Courses (${enrolledCourses.length})',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  ...enrolledCourses.map((course) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: _enrolledCourseCard(
+                          title: course.title,
+                          platform: course.platform,
+                          status: course.status,
+                          duration: course.duration,
+                          progress: course.progress,
+                          progressLabel: '${(course.progress * 100).toInt()}%',
+                          statusColor: course.progress == 1.0 ? Colors.green : Colors.blueGrey,
+                        ),
+                      )),
+                  const SizedBox(height: 18),
+                  const Text('Recommended for You', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  _recommendedCourseCard(
+                    title: 'Machine Learning Fundamentals',
+                    platform: 'udemy',
+                    price: 'Free',
+                    rating: 4.6,
+                    students: 22100,
+                    duration: '7 weeks',
+                  ),
+                  const SizedBox(height: 8),
+                  _recommendedCourseCard(
+                    title: 'Advanced React Development',
+                    platform: 'udemy',
+                    price: '\u20B9852',
+                    rating: 4.8,
+                    students: 12500,
+                    duration: '8 weeks',
+                  ),
+                  const SizedBox(height: 8),
+                  _recommendedCourseCard(
+                    title: 'Advanced React Development',
+                    platform: 'coursera',
+                    price: '\u20B9752',
+                    rating: 4.9,
+                    students: 13500,
+                    duration: '8 weeks',
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Text('My Enrolled Courses (1)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              _enrolledCourseCard(
-                title: 'Data Structures & Algorithms',
-                platform: 'udemy',
-                status: 'In Progress',
-                duration: '2 months',
-                progress: 0.3,
-                progressLabel: '30%',
-                statusColor: Colors.blueGrey,
-              ),
-              const SizedBox(height: 8),
-              _enrolledCourseCard(
-                title: 'Cloud Computing with AWS',
-                platform: 'coursera',
-                status: 'Completed',
-                duration: '2 months',
-                progress: 1.0,
-                progressLabel: '100%',
-                statusColor: Colors.green,
-              ),
-              const SizedBox(height: 18),
-              const Text('Recommended for You', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              _recommendedCourseCard(
-                title: 'Machine Learning Fundamentals',
-                platform: 'udemy',
-                price: 'Free',
-                rating: 4.6,
-                students: 22100,
-                duration: '7 weeks',
-              ),
-              const SizedBox(height: 8),
-              _recommendedCourseCard(
-                title: 'Advanced React Development',
-                platform: 'udemy',
-                price: '\u20B9852',
-                rating: 4.8,
-                students: 12500,
-                duration: '8 weeks',
-              ),
-              const SizedBox(height: 8),
-              _recommendedCourseCard(
-                title: 'Advanced React Development',
-                platform: 'coursera',
-                price: '\u20B9752',
-                rating: 4.9,
-                students: 13500,
-                duration: '8 weeks',
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
