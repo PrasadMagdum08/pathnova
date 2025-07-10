@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class AuthService {
   // ✅ Singleton setup
@@ -72,19 +72,27 @@ class AuthService {
 
   /// ✅ LOGIN STUDENT OR ADMIN
   Future<bool> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse(loginEndpoint),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email, 'password': password}),
-    );
+    final url = Uri.parse('$baseUrl/api/auth/login'); // check this endpoint
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      await _saveToken(data['token']);
-      _profile = data['user'];
-      return true;
-    } else {
-      print("Login failed: ${response.body}");
+      debugPrint("Login response status: ${response.statusCode}");
+      debugPrint("Login response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _token = data['token']; // store token
+        _profile = data['user']; // if backend sends profile inside 'user'
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Login exception: $e");
       return false;
     }
   }
@@ -92,32 +100,34 @@ class AuthService {
   /// ✅ FETCH STUDENT PROFILE
   Future<Map<String, dynamic>?> fetchStudentProfile() async {
     if (_token == null) {
-      print('Fetch profile failed: No token');
+      debugPrint("No token found. Cannot fetch profile.");
       return null;
     }
 
-    final response = await http.get(
-      Uri.parse('$profileEndpoint/fetch_profile'),
-      headers: {
-        'Authorization': 'Bearer $_token',
-        'Content-Type': 'application/json',
-      },
-    );
+    final url = Uri.parse(
+      '$baseUrl/api/profiles/student_profile/',
+    ); // double-check trailing slash
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
 
-    print('Profile fetch status: ${response.statusCode}');
-    print('Profile fetch body: ${response.body}');
-    print('Token used: $_token');
-    print('Fetching from: $profileEndpoint');
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+      debugPrint("Profile fetch status: ${response.statusCode}");
+      debugPrint("Profile fetch body: ${response.body}");
 
-
-    if (response.statusCode == 200) {
-      final profileData = json.decode(response.body);
-      _profile = profileData;
-      return profileData;
-    } else {
-      print("Fetch profile failed: ${response.body}");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _profile = data;
+        return data;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      debugPrint("Profile fetch exception: $e");
       return null;
     }
   }

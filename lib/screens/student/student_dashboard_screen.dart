@@ -51,17 +51,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       'skills',
       'upskilling',
       'portfolio_url',
+      'portfolio_building_duration'
     ];
 
-    int filled = requiredFields.where((key) {
-      final value = profile[key];
-      if (value == null) return false;
-      if (value is String) return value.trim().isNotEmpty;
-      if (value is List) return value.isNotEmpty;
-      return true;
-    }).length;
+    int filled = 0;
 
-    return filled / requiredFields.length;
+    for (var field in requiredFields) {
+      final value = profile[field];
+      if (value is String && value.trim().isNotEmpty) {
+        filled++;
+      } else if (value is List && value.isNotEmpty) {
+        filled++;
+      }
+    }
+
+    return requiredFields.isEmpty ? 0 : filled / requiredFields.length;
   }
 
   @override
@@ -72,7 +76,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       );
     }
 
-    final name = profileData?['name'] ?? 'Student';
+    final name = (profileData?['name'] ?? '').toString().trim();
+    final displayName = name.isNotEmpty ? name : 'Student';
     final profileImageUrl = profileData?['profileImageUrl'];
     final completion = _calculateCompletion(profileData ?? {});
 
@@ -138,7 +143,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _welcomeCard(name, completion),
+            _welcomeCard(displayName, completion),
             const SizedBox(height: 16),
             _dashboardGrid1(),
             const SizedBox(height: 16),

@@ -1,4 +1,5 @@
-import 'package:Pathnova/screens/auth/student_account_creation_screen.dart' show StudentAccountCreationScreen;
+import 'package:Pathnova/screens/auth/student_account_creation_screen.dart'
+    show StudentAccountCreationScreen;
 import 'package:Pathnova/services/auth_provider.dart' show AuthService;
 import 'package:flutter/material.dart';
 
@@ -32,19 +33,32 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (success) {
-        final role = AuthService().profile?['role'] ?? 'student';
+        final profile = await AuthService().fetchStudentProfile();
+
+        if (profile == null) {
+          // Profile not found even after login
+          _showRegistrationDialog();
+          return;
+        }
+        print("Trying login with $email");
+        print("Token after login: ${AuthService().token}");
+
+        final role = profile['role'] ?? 'student';
         if (role == 'admin') {
           Navigator.pushReplacementNamed(context, '/admin_dashboard');
         } else {
           Navigator.pushReplacementNamed(context, '/student_dashboard');
         }
       } else {
-        _showRegistrationDialog();
+        // Login failed due to wrong credentials
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed. Please try again.')),
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -63,7 +77,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => StudentAccountCreationScreen()),
+                  builder: (context) => StudentAccountCreationScreen(),
+                ),
               );
             },
             child: Text('Register'),
@@ -130,17 +145,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.person,
-                          color: isStudent ? Colors.black : Colors.grey),
-                      label: Text('Student',
-                          style: TextStyle(
-                              color: isStudent ? Colors.black : Colors.grey)),
+                      icon: Icon(
+                        Icons.person,
+                        color: isStudent ? Colors.black : Colors.grey,
+                      ),
+                      label: Text(
+                        'Student',
+                        style: TextStyle(
+                          color: isStudent ? Colors.black : Colors.grey,
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
-                        backgroundColor:
-                            isStudent ? Colors.white : Colors.transparent,
+                        backgroundColor: isStudent
+                            ? Colors.white
+                            : Colors.transparent,
                         side: const BorderSide(color: Colors.black),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       onPressed: () => setState(() => isStudent = true),
@@ -149,15 +171,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
-                      child: Text('Admin',
-                          style: TextStyle(
-                              color: !isStudent ? Colors.black : Colors.grey)),
+                      child: Text(
+                        'Admin',
+                        style: TextStyle(
+                          color: !isStudent ? Colors.black : Colors.grey,
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
-                        backgroundColor:
-                            !isStudent ? Colors.white : Colors.transparent,
+                        backgroundColor: !isStudent
+                            ? Colors.white
+                            : Colors.transparent,
                         side: const BorderSide(color: Colors.black),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       onPressed: () => setState(() => isStudent = false),
@@ -173,10 +200,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade400)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -188,29 +218,39 @@ class _LoginScreenState extends State<LoginScreen> {
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade400)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
                 child: _isLoading
                     ? CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2)
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      )
                     : Text(
                         isStudent ? 'Login as Student' : 'Login as Admin',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 50),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 50,
+                  ),
                 ),
                 onPressed: _isLoading ? null : _loginUser,
               ),
@@ -219,24 +259,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account?",
-                        style: TextStyle(fontSize: 13, color: Colors.black)),
+                    Text(
+                      "Don't have an account?",
+                      style: TextStyle(fontSize: 13, color: Colors.black),
+                    ),
                     SizedBox(width: 4),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  const StudentAccountCreationScreen()),
+                            builder: (context) =>
+                                const StudentAccountCreationScreen(),
+                          ),
                         );
                       },
-                      child: Text('Sign Up',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.deepPurple,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline)),
+                      child: Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                   ],
                 ),
