@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:async';
-import 'package:Pathnova/screens/auth/login_screen.dart' show LoginScreen;
-import 'package:Pathnova/screens/student/student_dashboard_screen.dart' show StudentDashboardScreen;
-import 'package:Pathnova/services/auth_provider.dart' show AuthService;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:Pathnova/screens/auth/login_screen.dart';
+import 'package:Pathnova/screens/student/student_dashboard_screen.dart';
+import 'package:Pathnova/services/auth_provider.dart';
 
 class StudentAccountCreationScreen extends StatefulWidget {
   const StudentAccountCreationScreen({super.key});
@@ -19,19 +19,19 @@ class _StudentAccountCreationScreenState
   int _currentStep = 0;
   bool _isLoading = false;
 
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-  final TextEditingController _collegeController = TextEditingController();
-  final TextEditingController _majorController = TextEditingController();
-  final TextEditingController _specializationController =
-      TextEditingController();
-  final TextEditingController _skillsController = TextEditingController();
-  final TextEditingController _skills2Controller = TextEditingController();
-  final TextEditingController _durationController = TextEditingController();
-  final TextEditingController _portfolioController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _collegeController = TextEditingController();
+  final _majorController = TextEditingController();
+  final _specializationController = TextEditingController();
+  final _skillsController = TextEditingController();
+  final _skills2Controller = TextEditingController();
+  final _durationController = TextEditingController();
+  final _portfolioController = TextEditingController();
 
   String? _semester;
   String? _batch;
@@ -51,9 +51,9 @@ class _StudentAccountCreationScreenState
   List<String> batches = ['2023', '2024', '2025', '2026', '2027'];
 
   void _nextStep() {
-    if (_currentStep == 0 &&
-        _passwordController.text != _confirmPasswordController.text) {
-      _showError('Passwords do not match');
+    if (_currentStep == 0 && !_formKey.currentState!.validate()) return;
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError("Passwords do not match");
       return;
     }
     if (_currentStep < 3) {
@@ -105,29 +105,20 @@ class _StudentAccountCreationScreenState
         "current_major": _majorController.text.trim(),
         "batch": _batch ?? '',
         "intended_specialized_major": _specializationController.text.trim(),
-        "skills": _skillsController.text.trim().isNotEmpty
-            ? _skillsController.text.trim().split(',').map((e) => e.trim()).toList()
-            : [],
-        "upskilling": _skills2Controller.text.trim().isNotEmpty
-            ? _skills2Controller.text.trim().split(',').map((e) => e.trim()).toList()
-            : [],
-        "portfolio_url": _portfolioController.text.trim().isNotEmpty
-            ? _portfolioController.text.trim().split(',').map((e) => e.trim()).toList()
-            : [],
-        "portfolio_building_duration":
-            int.tryParse(_durationController.text.trim()) ?? 0,
+        "skills": _skillsController.text.trim().split(',').map((e) => e.trim()).toList(),
+        "upskilling": _skills2Controller.text.trim().split(',').map((e) => e.trim()).toList(),
+        "portfolio_url": _portfolioController.text.trim().split(',').map((e) => e.trim()).toList(),
+        "portfolio_building_duration": int.tryParse(_durationController.text.trim()) ?? 0,
       };
 
-      final profileResponse = await http
-          .post(
-            Uri.parse('https://pathnova-backend-1.onrender.com/api/profile'),
-            headers: {
-              'Authorization': 'Bearer ${authService.token ?? ''}',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode(profileData),
-          )
-          .timeout(const Duration(seconds: 10));
+      final profileResponse = await http.post(
+        Uri.parse('https://pathnova-backend-1.onrender.com/api/profile'),
+        headers: {
+          'Authorization': 'Bearer ${authService.token ?? ''}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(profileData),
+      ).timeout(const Duration(seconds: 10));
 
       if (profileResponse.statusCode == 201 || profileResponse.statusCode == 200) {
         Navigator.of(context).pushReplacement(
@@ -146,39 +137,19 @@ class _StudentAccountCreationScreenState
   }
 
   Widget _buildStepIndicator() {
-    String stepText = '';
-    String subtitle = '';
-    switch (_currentStep) {
-      case 0:
-        stepText = 'Step 1 of 4 - Basic Information';
-        subtitle = 'Basic Information';
-        break;
-      case 1:
-        stepText = 'Step 2 of 4 - Academic Details';
-        subtitle = 'Academic Details';
-        break;
-      case 2:
-        stepText = 'Step 3 of 4 - Career Goals';
-        subtitle = 'Career Goals & Skills';
-        break;
-      case 3:
-        stepText = 'Step 4 of 4 - Review & Confirm';
-        subtitle = 'Review & Confirm';
-        break;
-    }
-
+    const titles = [
+      'Step 1 of 4 - Basic Information',
+      'Step 2 of 4 - Academic Details',
+      'Step 3 of 4 - Career Goals',
+      'Step 4 of 4 - Review & Confirm'
+    ];
     return Column(
       children: [
         const Text('Create Student Account', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(stepText, style: const TextStyle(fontSize: 14)),
+        Text(titles[_currentStep], style: const TextStyle(fontSize: 14)),
         const SizedBox(height: 8),
         Container(height: 3, width: 180, color: Colors.brown[300]),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ),
         const SizedBox(height: 8),
       ],
     );
@@ -187,16 +158,37 @@ class _StudentAccountCreationScreenState
   Widget _buildStepContent() {
     switch (_currentStep) {
       case 0:
-        return Column(
-          children: [
-            TextField(controller: _fullNameController, decoration: const InputDecoration(labelText: 'Full Name*')),
-            const SizedBox(height: 10),
-            TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email*')),
-            const SizedBox(height: 10),
-            TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password*')),
-            const SizedBox(height: 10),
-            TextField(controller: _confirmPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm Password*')),
-          ],
+        return Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _fullNameController,
+                decoration: const InputDecoration(labelText: 'Full Name*'),
+                validator: (val) => val == null || val.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email*'),
+                validator: (val) => val == null || val.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password*'),
+                validator: (val) => val == null || val.length < 6 ? "Minimum 6 characters" : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirm Password*'),
+                validator: (val) => val != _passwordController.text ? "Passwords do not match" : null,
+              ),
+            ],
+          ),
         );
       case 1:
         return Column(
@@ -208,18 +200,18 @@ class _StudentAccountCreationScreenState
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _semester,
+                    decoration: const InputDecoration(labelText: 'Semester*'),
                     items: semesters.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                     onChanged: (v) => setState(() => _semester = v),
-                    decoration: const InputDecoration(labelText: 'Semester*'),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _batch,
+                    decoration: const InputDecoration(labelText: 'Batch*'),
                     items: batches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                     onChanged: (v) => setState(() => _batch = v),
-                    decoration: const InputDecoration(labelText: 'Batch*'),
                   ),
                 ),
               ],

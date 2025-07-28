@@ -1,8 +1,8 @@
 import 'package:Pathnova/screens/components/chat_details_screen.dart' show ChatDetailScreen;
 import 'package:flutter/material.dart';
 
-class StudentChatScreen extends StatelessWidget {
-  const StudentChatScreen({super.key});
+class AdminChatScreen extends StatelessWidget {
+  const AdminChatScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,29 +15,46 @@ class StudentChatScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Student Chats', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text('Admin Chats', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          _chatCard(context, 'John Student', 'student', false, 'chat123', 'personal', 'Hey, let\'s revise this topic.', '2m ago'),
-          _chatCard(context, 'Mentor Raj', 'admin', false, 'chat456', 'admin', 'Your task is reviewed.', '10m ago'),
-          _chatCard(context, 'AI Group', 'group', true, 'chat789', 'group', 'Next session is at 5 PM.', '1h ago'),
+          _chatCard(
+            context,
+            name: 'Prasad Magdum',
+            role: 'student',
+            isGroup: false,
+            chatId: 'chat-student-prasad',
+            chatType: 'student',
+            lastMessage: 'Sir, can you help me with resume?',
+            time: '5m ago',
+          ),
+          _chatCard(
+            context,
+            name: 'AI Club Team',
+            role: 'group',
+            isGroup: true,
+            chatId: 'chat-group-ai-club',
+            chatType: 'group',
+            lastMessage: 'Meeting link updated!',
+            time: '20m ago',
+          ),
         ],
       ),
     );
   }
 
   Widget _chatCard(
-    BuildContext context,
-    String name,
-    String role,
-    bool isGroup,
-    String chatId,
-    String chatType,
-    String lastMessage,
-    String time,
-  ) {
+    BuildContext context, {
+    required String name,
+    required String role,
+    required bool isGroup,
+    required String chatId,
+    required String chatType,
+    required String lastMessage,
+    required String time,
+  }) {
     return GestureDetector(
       onTap: () {
         Navigator.push(

@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:Pathnova/models/course_model.dart' show Course;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:Pathnova/models/course_model.dart'; // Update import path if needed
 
 class AuthService {
   // Singleton setup
@@ -10,8 +10,9 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  // API Endpoints
+  // Base API URL (Node.js backend)
   static const String baseUrl = 'https://pathnova-backend-1.onrender.com/api';
+
   static const String registerEndpoint = '$baseUrl/auth/register';
   static const String loginEndpoint = '$baseUrl/auth/login';
   static const String profileEndpoint = '$baseUrl/profile';
@@ -22,27 +23,27 @@ class AuthService {
   String? get token => _token;
   Map<String, dynamic>? get profile => _profile;
 
-  /// Save token to SharedPreferences
+  /// Save token locally
   Future<void> _saveToken(String token) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
     _token = token;
   }
 
-  /// Load token from SharedPreferences
+  /// Load token
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('jwt_token');
   }
 
-  /// Remove token from SharedPreferences
+  /// Clear token
   Future<void> _clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
     _token = null;
   }
 
-  /// REGISTER STUDENT OR ADMIN
+  /// REGISTER student or admin
   Future<bool> register({
     required String name,
     required String email,
@@ -71,9 +72,9 @@ class AuthService {
     }
   }
 
-  /// LOGIN STUDENT OR ADMIN
+  /// LOGIN student or admin
   Future<bool> login(String email, String password) async {
-    final url = Uri.parse(loginEndpoint); 
+    final url = Uri.parse(loginEndpoint);
     try {
       final response = await http.post(
         url,
@@ -86,8 +87,8 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _token = data['token']; 
-        _profile = data['user']; 
+        await _saveToken(data['token']);
+        _profile = data['user'];
         return true;
       } else {
         return false;
@@ -98,22 +99,20 @@ class AuthService {
     }
   }
 
-  /// FETCH STUDENT PROFILE
+  /// FETCH student profile from Node.js
   Future<Map<String, dynamic>?> fetchStudentProfile() async {
     if (_token == null) {
       debugPrint("No token found. Cannot fetch profile.");
       return null;
     }
 
-    final url = Uri.parse(
-      '$profileEndpoint/fetch_profile',
-    ); 
+    final url = Uri.parse('$profileEndpoint/fetch_profile');
     try {
       final response = await http.get(
         url,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
         },
       );
 
@@ -133,7 +132,7 @@ class AuthService {
     }
   }
 
-  /// CREATE OR UPDATE STUDENT PROFILE
+  /// CREATE or UPDATE student profile in Node.js
   Future<bool> updateStudentProfile(Map<String, dynamic> data) async {
     if (_token == null) return false;
 
@@ -155,7 +154,7 @@ class AuthService {
     }
   }
 
-  /// UPDATE PROFILE IMAGE
+  /// UPDATE profile image in Node.js
   Future<bool> updateProfileImage(String imageUrl) async {
     if (_token == null) return false;
 
@@ -177,16 +176,35 @@ class AuthService {
     }
   }
 
-  /// FETCH COURSE RECOMMENDATIONS
+  /// FETCH enrolled courses
+  Future<List<Course>> fetchEnrolledCourses() async {
+    if (_token == null) return [];
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/courses/enrolled'),
+      headers: {'Authorization': 'Bearer $_token'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<Course> enrolled = (data['enrolled_courses'] as List)
+          .map((course) => Course.fromJson(course))
+          .toList();
+      return enrolled;
+    } else {
+      debugPrint("Failed to load enrolled courses: ${response.body}");
+      return [];
+    }
+  }
+
+  /// FETCH course recommendations
   Future<Map<String, dynamic>?> fetchCourseRecommendations() async {
     if (_token == null) {
       debugPrint("No token found. Cannot fetch course recommendations.");
       return null;
     }
 
-    final url = Uri.parse(
-      'https://pathnova-backend-1.onrender.com/api/courses',
-    );
+    final url = Uri.parse('$baseUrl/courses');
     try {
       final response = await http.get(
         url,
@@ -211,28 +229,7 @@ class AuthService {
     }
   }
 
-  Future<List<Course>> fetchEnrolledCourses() async {
-  if (_token == null) return [];
-
-  final response = await http.get(
-    Uri.parse('$baseUrl/courses/enrolled'), // your node route
-    headers: {'Authorization': 'Bearer $_token'},
-  );
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    final List<Course> enrolled = (data['enrolled_courses'] as List)
-        .map((course) => Course.fromJson(course))
-        .toList();
-    return enrolled;
-  } else {
-    debugPrint("Failed to load enrolled courses: ${response.body}");
-    return [];
-  }
-}
-
-
-  /// ✅ LOGOUT USER
+  /// LOGOUT
   void logout() {
     _clearToken();
     _profile = null;

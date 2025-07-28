@@ -30,26 +30,7 @@ class _StudentEnrolledCoursesScreenState extends State<StudentEnrolledCoursesScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F3F3),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.menu, color: Colors.black),
-            const SizedBox(width: 10),
-            const Text('Courses', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications_none, color: Colors.black), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.account_circle_outlined, color: Colors.black), onPressed: () {}),
-        ],
-      ),
+      backgroundColor: Colors.white,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
